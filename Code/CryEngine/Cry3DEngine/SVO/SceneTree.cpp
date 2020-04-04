@@ -375,44 +375,6 @@ bool CSvoEnv::Render()
 		   4, &arrVerts[0], nullptr, pObjVox, (*CVoxelSegment::m_pCurrPassInfo), &arrIndices[0], 6, false );
 		 */
 	}
-	else if (GetCVars()->e_svoDVR > 1)
-	{
-		const CCamera& camera = GetISystem()->GetViewCamera();
-
-		SVF_P3F_C4B_T2F arrVerts[4];
-		ZeroStruct(arrVerts);
-		uint16 arrIndices[] = { 0, 2, 1, 2, 3, 1 };
-
-		for (int x = 0; x < 2; x++)
-		{
-			for (int y = 0; y < 2; y++)
-			{
-				int i = x * 2 + y;
-				float X = (float)(camera.GetViewSurfaceX() * x);
-				float Y = (float)(camera.GetViewSurfaceZ() * y);
-
-				GetRenderer()->UnProjectFromScreen(X, Y, 0.05f, &arrVerts[i].xyz.x, &arrVerts[i].xyz.y, &arrVerts[i].xyz.z);
-			}
-		}
-
-		SInputShaderResourcesPtr pInputResource = GetRenderer()->EF_CreateInputShaderResource();
-		SInputShaderResources& res = *pInputResource;
-
-		static _smart_ptr<IMaterial> pMat = Cry3DEngineBase::MakeSystemMaterialFromShader("Total_Illumination.SvoDebugDraw", &res);
-		pObjVox->m_pCurrMaterial = pMat;
-
-		SRenderPolygonDescription poly(
-		  pObjVox,
-		  pMat->GetShaderItem(),
-		  4, &arrVerts[0], nullptr,
-		  &arrIndices[0], 6,
-		  EFSLIST_DECAL, false);
-
-		CVoxelSegment::m_pCurrPassInfo->GetIRenderView()->AddPolygon(poly, (*CVoxelSegment::m_pCurrPassInfo));
-
-		if (ICVar* pV = gEnv->pConsole->GetCVar("r_UseAlphaBlend"))
-			pV->Set(1);
-	}
 	#endif
 
 	if (Cry3DEngineBase::GetCVars()->e_svoDebug == 4 && 0)

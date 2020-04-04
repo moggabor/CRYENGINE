@@ -60,6 +60,7 @@ struct SSvoPrimitivePasses
 	CSvoComputePass      m_passPropagateLighting_1to2;
 	CSvoComputePass      m_passPropagateLighting_2to3;
 	CSvoFullscreenPass   m_passTroposphere;
+	CSvoFullscreenPass   m_passDebugDraw;
 
 	SGraphicsPipelineKey currentKey;
 
@@ -82,6 +83,7 @@ public:
 	static bool          IsActive();
 	void                 UpdateCompute(CRenderView* pRenderView);
 	void                 UpdateRender(CRenderView* pRenderView);
+	void                 UpdateDebug(CRenderView* pRenderView);
 	int                  GetIntegratioMode() const;
 	int                  GetIntegratioMode(bool& bSpecTracingInUse) const;
 	bool                 GetUseLightProbes() const { return e_svoTI_SkyColorMultiplier >= 0; }
@@ -137,6 +139,7 @@ protected:
 
 	void                   TropospherePass();
 	void                   TraceSunShadowsPass();
+	void                   DebugDrawPass();
 
 	void                   SetupGBufferTextures(CSvoFullscreenPass& rp);
 

@@ -35,6 +35,7 @@ SSvoPrimitivePasses::SSvoPrimitivePasses(CGraphicsPipeline* pGraphicsPipeline)
 	, m_passPropagateLighting_1to2(pGraphicsPipeline)
 	, m_passPropagateLighting_2to3(pGraphicsPipeline)
 	, m_passTroposphere(pGraphicsPipeline)
+	, m_passDebugDraw(pGraphicsPipeline)
 	, currentKey(pGraphicsPipeline->GetKey())
 {
 }
@@ -509,6 +510,67 @@ void CSvoRenderer::TraceSunShadowsPass()
 	#endif
 }
 
+void CSvoRenderer::DebugDrawPass()
+{
+	#ifdef FEATURE_SVO_GI_ALLOW_HQ
+
+	CSvoFullscreenPass& rp = m_pPasses->m_passDebugDraw;
+
+	if (m_texInfo.bSvoFreeze || !m_texInfo.pTexTree)
+		return;
+
+	const char* szTechFinalName = "DebugDrawPass";
+
+	rp.SetTechnique(m_pShader, szTechFinalName, GetRunTimeFlags(0));
+	rp.SetPrimitiveFlags(CRenderPrimitive::eFlags_ReflectShaderConstants_PS);
+	rp.SetState(GS_NODEPTHTEST);
+
+	rp.SetRenderTarget(0, RenderView()->GetColorTarget());
+	rp.SetRequireWorldPos(true);
+	rp.SetRequirePerViewConstantBuffer(true);
+
+	SetupCommonSamplers(rp);
+	SetupSvoTexturesForRead(m_texInfo, rp, 0, 0, 0);
+
+	int dvrTexId = 0;
+	switch (e_svoDVR)
+	{
+	case 3:
+		dvrTexId = vp_RGB1.nTexId;
+		break;
+	case 4:
+		dvrTexId = vp_RGB2.nTexId;
+		break;
+	case 5:
+		dvrTexId = vp_RGB3.nTexId;
+		break;
+	case 6:
+		dvrTexId = vp_RGB4.nTexId;
+		break;
+	case 7:
+		dvrTexId = vp_ALDI.nTexId;
+		break;
+	case 8:
+		dvrTexId = vp_DYNL.nTexId;
+		break;
+	case 9:
+		dvrTexId = vp_NORM.nTexId;
+		break;
+	}
+
+	if (dvrTexId > 0)
+	{
+		rp.SetTexture(1, CTexture::GetByID(dvrTexId));
+	}
+
+	rp.BeginConstantUpdate();
+	SetupCommonConstants(nullptr, rp, rp.GetRenderTarget(0));
+
+	rp.Execute();
+
+	#endif
+}
+
 void CSvoRenderer::SetupGBufferTextures(CSvoFullscreenPass& rp)
 {
 	const CGraphicsPipelineResources& pipelineResources = RenderView()->GetGraphicsPipeline()->GetPipelineResources();
@@ -857,6 +919,30 @@ void CSvoRenderer::UpdateRender(CRenderView* pRenderView)
 	{
 		m_matViewProjPrev = viewInfo.cameraProjMatrix;
 		m_matViewProjPrev.Transpose();
+	}
+
+	if (gEnv->IsEditor())
+		CRenderer::CV_r_shadersasynccompiling = nPrevAsync;
+
+	m_pRenderView = nullptr;
+}
+
+void CSvoRenderer::UpdateDebug(CRenderView* pRenderView)
+{
+	FUNCTION_PROFILER_RENDERER();
+
+	PROFILE_LABEL_SCOPE("SVOGI_DEBUG");
+
+	m_pRenderView = pRenderView;
+	int nPrevAsync = CRenderer::CV_r_shadersasynccompiling;
+	if (gEnv->IsEditor())
+		CRenderer::CV_r_shadersasynccompiling = 0;
+
+	if (e_svoEnabled && e_svoTI_Active && e_svoTI_Apply && m_texInfo.bSvoReady && e_svoDVR)
+	{
+		PROFILE_LABEL_SCOPE("TI_DVR");
+
+		DebugDrawPass();
 	}
 
 	if (gEnv->IsEditor())

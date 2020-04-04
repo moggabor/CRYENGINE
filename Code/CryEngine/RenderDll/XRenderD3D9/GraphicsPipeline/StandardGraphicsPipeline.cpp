@@ -483,6 +483,13 @@ void CStandardGraphicsPipeline::Execute()
 		// Display tone mapping debugging information on the screen
 		if (GetStage<CToneMappingStage>()->IsDebugInfoEnabled())
 			GetStage<CToneMappingStage>()->DisplayDebugInfo();
+
+#if defined(FEATURE_SVO_GI)
+		if (CSvoRenderer::GetInstance())
+		{
+			CSvoRenderer::GetInstance()->UpdateDebug(pRenderView);
+		}
+#endif
 	}
 	else
 	{

@@ -767,7 +767,7 @@ float4 ConeTraceTreeAndSky(float fRayLen, const Ray r, const float fConeSev, con
 	return ConeTraceTreeAndSkyEx(fRayLen, r, fConeSev, vNor1, fConesColorSatur, fMultTriRT, bSpecular, bForceUseLighting, true, vSurfNorm);
 }
 
-pixout SvoDebugDrawPS(vert2FragGeneral IN)
+pixout DebugDrawPS(vtxOutWPOS IN)
 {
 	pixout OUT = (pixout)0;
 
@@ -776,7 +776,7 @@ pixout SvoDebugDrawPS(vert2FragGeneral IN)
 	// define ray
 	Ray r;
 	r.startpoint = PS_WorldViewPos.xyz;
-	r.direction = normalize(IN.baseTC.xyz - PS_WorldViewPos.xyz);
+	r.direction = normalize(IN.CamVec.xyz - PS_WorldViewPos.xyz);
 
 	float4 vPos0 = 0, vNormal = 0;
 
@@ -793,8 +793,7 @@ pixout SvoDebugDrawPS(vert2FragGeneral IN)
 
 	cDiffuseMap.w = 1;
 
-	OUT.Color = pow(cDiffuseMap, 1) / 16;
-	OUT.Color.w = 1;
+	OUT.Color = cDiffuseMap;
 
 	return OUT;
 }
@@ -2804,12 +2803,12 @@ pixoutMRTUpscale UpScalePS(vtxOutWPOS IN)
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Rendering techniques
 
-technique SvoDebugDraw
+technique DebugDrawPass
 {
 	pass p0
 	{
-		VertexShader = VoxelRayTraceVS() GeneralVS;
-		PixelShader = SvoDebugDrawPS() GeneralPS;
+		VertexShader = RenderLightingCommonVS();
+		PixelShader = DebugDrawPS();
 		CullMode = None;
 	}
 }
